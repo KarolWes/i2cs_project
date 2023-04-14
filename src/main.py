@@ -58,6 +58,7 @@ class Alice(YaoGarbler):
 
     def start(self):
         """Start Yao protocol."""
+        util.private_func("Alice")
         for circuit in self.circuits:
             to_send = {
                 "circuit": circuit["circuit"],
@@ -66,7 +67,7 @@ class Alice(YaoGarbler):
             }
             logging.debug(f"Sending {circuit['circuit']['id']}")
             self.socket.send_wait(to_send)
-            self.print(circuit)
+            #self.print(circuit)
 
     def print(self, entry):
         """Print circuit evaluation for all Bob and Alice inputs.
@@ -257,7 +258,7 @@ def main(
     circuit_path="circuits/default.json",
     oblivious_transfer=True,
     print_mode="circuit",
-    loglevel=logging.WARNING,
+    loglevel=logging.DEBUG,
 ):
     logging.getLogger().setLevel(loglevel)
 
@@ -313,12 +314,8 @@ if __name__ == '__main__':
                             default="warning",
                             help="the log level (default 'warning')")
 
-        main(
-            party=parser.parse_args().party,
-            circuit_path=parser.parse_args().circuit,
-            oblivious_transfer=not parser.parse_args().no_oblivious_transfer,
-            print_mode=parser.parse_args().m,
-            loglevel=loglevels[parser.parse_args().loglevel],
-        )
+        main(party=parser.parse_args().party, circuit_path=parser.parse_args().circuit,
+             oblivious_transfer=not parser.parse_args().no_oblivious_transfer, print_mode=parser.parse_args().m,
+             loglevel=loglevels[parser.parse_args().loglevel])
 
     init()

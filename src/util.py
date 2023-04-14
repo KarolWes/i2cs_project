@@ -11,6 +11,7 @@ SERVER_HOST = "localhost"
 SERVER_PORT = 4080
 
 
+
 class Socket:
     def __init__(self, socket_type):
         self.socket = zmq.Context().socket(socket_type)
@@ -123,3 +124,19 @@ class PrimeGroup:
 def parse_json(json_path):
     with open(json_path) as json_file:
         return json.load(json_file)
+
+
+def cleanup(line: [], lim: int = 16):
+    return [num for num in line if 0 <= num < lim]
+
+
+def private_func(name: str):
+    print(f"Hello, this is {name}.")
+    print("This program will compute max of given numbers.")
+    print("Enter numbers seperated by spaces, end with new line.")
+    print("Each number should be at most four bits, so less than 16.")
+
+    line = [*map(int, input().split())]
+    line = cleanup(line)
+    local_max = bin(max(line))[2:].zfill(4)
+    return local_max
