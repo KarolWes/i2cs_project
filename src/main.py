@@ -104,6 +104,9 @@ class Alice(YaoGarbler):
 
         print(f"Output: {int_result}")
 
+        # Verification part
+
+
 
     def _get_encr_bits(self, pbit, key0, key1):
         return ((key0, 0 ^ pbit), (key1, 1 ^ pbit))
@@ -158,8 +161,17 @@ class Bob:
         }
 
         # Evaluate and send result to Alice
-        self.ot.send_result(circuit, garbled_tables, pbits_out,
+        result = self.ot.send_result(circuit, garbled_tables, pbits_out,
                             b_inputs_clear)
+        int_result = int("".join(str(result[k]) for k in result.keys()),2)
+        print(f"Result of function is {int_result}")
+
+    def verify(self, entry):
+        logging.info("Verifying")
+        alice_max = entry["private_max"]
+        general_max = entry["obtained_max"]
+        res = max(alice_max, int(self.private_value, 2)) == general_max
+        self.socket.send(res)
 
 
 class LocalTest(YaoGarbler):

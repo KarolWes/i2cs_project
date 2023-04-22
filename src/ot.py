@@ -68,6 +68,7 @@ class ObliviousTransfer:
 
         logging.debug("Sending circuit evaluation")
         self.socket.send(result)
+        return result
 
     def ot_garbler(self, msgs):
         """Oblivious transfer, Alice's side.
