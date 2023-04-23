@@ -44,6 +44,10 @@ class ObliviousTransfer:
             g_tables: Garbled tables of yao circuit.
             pbits_out: p-bits of outputs.
             b_inputs: A dict mapping Bob's wires to (clear) input bits.
+
+        Returns:
+            result: Output of the evaluation, formatted as dictionary {no_of_wire: bit}
+                    It is the same value as is sent to the counterpart.
         """
         # map from Alice's wires to (key, encr_bit) inputs
         a_inputs = self.socket.receive()
