@@ -4,6 +4,10 @@ import pickle
 import util
 import yao
 
+# File kept mostly intact
+# Only change is applied to func send result,
+# which now also return the same value as is sent through channel
+
 
 class ObliviousTransfer:
     def __init__(self, socket, enabled=True):

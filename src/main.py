@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import logging
-import garbler
-from src.alice import Alice
-from src.bob import Bob
+from garbler import LocalTest
+from alice import Alice
+from bob import Bob
+
+# File is kept as received, only cleaned up for convenience
+# Class YaoGarbler and LocalTest moved to file garbler.py (with no changes applied)
+# Classes Alice and Bob moved to their respective files.
 
 logging.basicConfig(format="[%(levelname)s] %(message)s",
                     level=logging.WARNING)
@@ -24,7 +28,7 @@ def main(
         bob = Bob(oblivious_transfer=oblivious_transfer)
         bob.listen()
     elif party == "local":
-        local = garbler.LocalTest(circuit_path, print_mode=print_mode)
+        local = LocalTest(circuit_path, print_mode=print_mode)
         local.start()
     else:
         logging.error(f"Unknown party '{party}'")

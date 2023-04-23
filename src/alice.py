@@ -1,6 +1,9 @@
 import logging
 
-from src import garbler, util, ot, utli_karol
+import garbler
+import ot
+import util
+import utli_karol
 
 
 class Alice(garbler.YaoGarbler):
@@ -39,6 +42,9 @@ class Alice(garbler.YaoGarbler):
             self.socket.send_wait(to_send)
             self.print(circuit)
 
+            print("-------------")
+            self.calculate_response(circuit)
+
     def print(self, entry):
         """Print circuit evaluation for all Bob and Alice inputs.
 
@@ -54,13 +60,57 @@ class Alice(garbler.YaoGarbler):
             w: self._get_encr_bits(pbits[w], key0, key1)
             for w, (key0, key1) in keys.items() if w in b_wires
         }
+        N = len(a_wires) + len(b_wires)
 
         print(f"======== {circuit['id']} ========")
+
+        # Generate all inputs for both Alice and Bob
+        for bits in [format(n, 'b').zfill(N) for n in range(2 ** N)]:
+            bits_a = [int(b) for b in bits[:len(a_wires)]]  # Alice's inputs
+
+            # Map Alice's wires to (key, encr_bit)
+            for i in range(len(a_wires)):
+                a_inputs[a_wires[i]] = (keys[a_wires[i]][bits_a[i]],
+                                        pbits[a_wires[i]] ^ bits_a[i])
+
+            # Send Alice's encrypted inputs and keys to Bob
+            result = self.ot.get_result(a_inputs, b_keys)
+
+            # Format output
+            str_bits_a = ' '.join(bits[:len(a_wires)])
+            str_bits_b = ' '.join(bits[len(a_wires):])
+            str_result = ' '.join([str(result[w]) for w in outputs])
+
+            print(f"  Alice{a_wires} = {str_bits_a} "
+                  f"Bob{b_wires} = {str_bits_b}  "
+                  f"Outputs{outputs} = {str_result}")
+
+        print()
+
+    def calculate_response(self, entry):
+        """Proceeds with OT on real data.
+        Function based on the original print function.
+        Instead of repeating transfer for all possible inputs it takes only the important one
+        (i.e. the one corresponding to value calculated in private_func)
+
+        Args:
+            entry: A dict representing the circuit to evaluate.
+        """
+        # initiation of the function, exactly the same as in original,
+        # optimized for required variables only
+        circuit, pbits, keys = entry["circuit"], entry["pbits"], entry["keys"]
+        a_wires = circuit.get("alice", [])  # Alice's wires
+        a_inputs = {}  # map from Alice's wires to (key, encr_bit) inputs
+        b_wires = circuit.get("bob", [])  # Bob's wires
+        b_keys = {  # map from Bob's wires to a pair (key, encr_bit)
+            w: self._get_encr_bits(pbits[w], key0, key1)
+            for w, (key0, key1) in keys.items() if w in b_wires
+        }
 
         # Circuit input generated based on private value obtained while initialisation
         bits_a = [int(b) for b in self.private_value]  # Alice's inputs
 
-        # Map Alice's wires to (key, encr_bit)
+        # Map Alice's wires to (key, encr_bit), no changes here
         for i in range(len(a_wires)):
             a_inputs[a_wires[i]] = (keys[a_wires[i]][bits_a[i]],
                                     pbits[a_wires[i]] ^ bits_a[i])
@@ -68,12 +118,10 @@ class Alice(garbler.YaoGarbler):
         # Send Alice's encrypted inputs and keys to Bob
         result = self.ot.get_result(a_inputs, b_keys)
 
-        # Format output
-        int_result = int(''.join([str(result[w]) for w in outputs]), 2)
-
+        # Format output and print
+        int_result = utli_karol.circuit_output_to_int(result)
         print(f"Output: {int_result}")
 
-        # Verification part
 
     def _get_encr_bits(self, pbit, key0, key1):
         return ((key0, 0 ^ pbit), (key1, 1 ^ pbit))

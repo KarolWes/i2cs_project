@@ -1,6 +1,8 @@
 import logging
 
-from src import util, ot, utli_karol
+import ot
+import util
+import utli_karol
 
 
 class Bob:
@@ -25,7 +27,11 @@ class Bob:
         try:
             for entry in self.socket.poll_socket():
                 self.socket.send(True)
-                self.send_evaluation(entry)
+                if len(entry) == 3:
+                    self.send_evaluation(entry)
+                    self.send_response(entry)
+                else:
+                    self.verify(entry)
         except KeyboardInterrupt:
             logging.info("Stop listening")
 
@@ -40,22 +46,54 @@ class Bob:
         garbled_tables = entry["garbled_tables"]
         a_wires = circuit.get("alice", [])  # list of Alice's wires
         b_wires = circuit.get("bob", [])  # list of Bob's wires
+        N = len(a_wires) + len(b_wires)
+
+        print(f"Received {circuit['id']}")
+
+        # Generate all possible inputs for both Alice and Bob
+        for bits in [format(n, 'b').zfill(N) for n in range(2 ** N)]:
+            bits_b = [int(b) for b in bits[N - len(b_wires):]]  # Bob's inputs
+
+            # Create dict mapping each wire of Bob to Bob's input
+            b_inputs_clear = {
+                b_wires[i]: bits_b[i]
+                for i in range(len(b_wires))
+            }
+
+            # Evaluate and send result to Alice
+            self.ot.send_result(circuit, garbled_tables, pbits_out,
+                                b_inputs_clear)
+
+    def send_response(self, entry):
+        """Cased on a circuit and input from Alice calculate the result.
+            Function is based on original send_evaluation function.
+            Instead of generating output for every possible input, it relies on the received input only
+
+        Args:
+            entry: A dict representing the circuit to evaluate.
+        """
+        # initiation of the function, exactly the same as in original,
+        # optimized for required variables only
+        circuit, pbits_out = entry["circuit"], entry["pbits_out"]
+        garbled_tables = entry["garbled_tables"]
+        b_wires = circuit.get("bob", [])  # list of Bob's wires
 
         print(f"Received {circuit['id']}")
 
         # Generate input to circuit based on the value obtained on init
         bits_b = [int(b) for b in self.private_value]  # Bob's inputs
 
-        # Create dict mapping each wire of Bob to Bob's input
+        # Create dict mapping each wire of Bob to Bob's input, no changes here
         b_inputs_clear = {
             b_wires[i]: bits_b[i]
             for i in range(len(b_wires))
         }
 
-        # Evaluate and send result to Alice
+        # Evaluate and send result to Alice,
+        # also obtain the result for yourself and print
         result = self.ot.send_result(circuit, garbled_tables, pbits_out,
                                      b_inputs_clear)
-        int_result = int("".join(str(result[k]) for k in result.keys()), 2)
+        int_result = utli_karol.circuit_output_to_int(result)
         print(f"Result of function is {int_result}")
 
     def verify(self, entry):

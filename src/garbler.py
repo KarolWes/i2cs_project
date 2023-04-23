@@ -1,7 +1,7 @@
 import logging
 from abc import abstractmethod, ABC
-
-from src import util, yao
+import util
+import yao
 
 
 class YaoGarbler(ABC):

@@ -38,3 +38,15 @@ def private_func(name: str):
     line = cleanup(line)
     local_max = bin(max(line))[2:].zfill(4)
     return local_max
+
+
+def circuit_output_to_int(d: dict):
+    """
+    Converts output from the circuit (after OT processing) and converts it to a number
+    Args:
+        d: dictionary of outputs {no_of_wire:bit}
+
+    Returns:
+        integer value of output
+    """
+    return int("".join(str(d[k]) for k in d.keys()), 2)
