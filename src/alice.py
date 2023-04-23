@@ -20,17 +20,24 @@ class Alice(garbler.YaoGarbler):
     Attributes:
         circuits: the JSON file containing circuits
         oblivious_transfer: Optional; enable the Oblivious Transfer protocol
-            (True by default).
+            (True by default)
+        filename: Optional; path to the file, from which to read data.
+            Default is empty string, and data is read from console
     """
 
-    def __init__(self, circuits, oblivious_transfer=True):
+    def __init__(self, circuits, oblivious_transfer=True, print_mode="none", filename=""):
         super().__init__(circuits)
         self.socket = util.GarblerSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
         # Two more fields: general_max stores the value obtained from the OT to further use
         # private_value is equal to max of input, obtained through private_func
+        # (either from console or from file)
+        self.pm = print_mode
         self.general_max = -1
-        self.private_value = utli_karol.private_func("Alice")
+        if filename == "":
+            self.private_value = utli_karol.private_func("Alice")
+        else:
+            self.private_value = utli_karol.private_func("Alice", file_read=True, filename=filename)
 
     def start(self):
         """Start Yao protocol."""
@@ -43,7 +50,8 @@ class Alice(garbler.YaoGarbler):
             }
             logging.debug(f"Sending {circuit['circuit']['id']}")
             self.socket.send_wait(to_send)
-            # self.print(circuit)
+            if self.pm != "none":
+                self.print(circuit)
 
             print("-------------")
             self.calculate_response(circuit)

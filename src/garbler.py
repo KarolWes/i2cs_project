@@ -39,6 +39,7 @@ class LocalTest(YaoGarbler):
         circuits: the JSON file containing circuits
         print_mode: Print a clear version of the garbled tables or
             the circuit evaluation (the default).
+            <adjusted to new default>
     """
     def __init__(self, circuits, print_mode="circuit"):
         super().__init__(circuits)
@@ -46,6 +47,7 @@ class LocalTest(YaoGarbler):
         self.modes = {
             "circuit": self._print_evaluation,
             "table": self._print_tables,
+            "none": self._print_evaluation
         }
         logging.info(f"Print mode: {print_mode}")
 

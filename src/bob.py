@@ -14,12 +14,20 @@ class Bob:
     Args:
         oblivious_transfer: Optional; enable the Oblivious Transfer protocol
             (True by default).
+        filename: Optional; path to the file, from which to read data.
+            Default is empty string, and data is read from console
     """
 
-    def __init__(self, oblivious_transfer=True):
-        self.private_value = utli_karol.private_func("Bob")
+    def __init__(self, oblivious_transfer=True, print_mode="none", filename=""):
         self.socket = util.EvaluatorSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
+        self.pm = print_mode
+        if filename == "":
+            self.private_value = utli_karol.private_func("Bob")
+        else:
+            self.private_value = utli_karol.private_func("Bob", file_read=True, filename=filename)
+
+
 
     def listen(self):
         """Start listening for Alice messages."""
@@ -28,7 +36,8 @@ class Bob:
             for entry in self.socket.poll_socket():
                 self.socket.send(True)
                 if len(entry) == 3:
-                    self.send_evaluation(entry)
+                    if self.pm != "none":
+                        self.send_evaluation(entry)
                     self.send_response(entry)
                 elif len(entry) == 2:
                     self.verify(entry)
@@ -121,5 +130,4 @@ class Bob:
             print("Verified correctly")
         else:
             print(f"Error! Through transfer obtained: {general_max}, correct value: {verification_max}")
-        print(res)
-        # self.socket.send(res)
+        self.socket.send(res)

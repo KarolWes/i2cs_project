@@ -10,22 +10,23 @@ from bob import Bob
 
 logging.basicConfig(format="[%(levelname)s] %(message)s",
                     level=logging.WARNING)
-
+PRINTOUT = "none"
 
 def main(
         party,
         circuit_path="circuits/default.json",
         oblivious_transfer=True,
-        print_mode="circuit",
+        print_mode=PRINTOUT,
         loglevel=logging.DEBUG,
+        filename=""
 ):
     logging.getLogger().setLevel(loglevel)
 
     if party == "alice":
-        alice = Alice(circuit_path, oblivious_transfer=oblivious_transfer)
+        alice = Alice(circuit_path, oblivious_transfer=oblivious_transfer, print_mode=print_mode, filename=filename)
         alice.start()
     elif party == "bob":
-        bob = Bob(oblivious_transfer=oblivious_transfer)
+        bob = Bob(oblivious_transfer=oblivious_transfer, print_mode=print_mode, filename=filename)
         bob.listen()
     elif party == "local":
         local = LocalTest(circuit_path, print_mode=print_mode)
@@ -64,19 +65,24 @@ if __name__ == '__main__':
         parser.add_argument(
             "-m",
             metavar="mode",
-            choices=["circuit", "table"],
-            default="circuit",
-            help="the print mode for local tests (default 'circuit')")
+            choices=["circuit", "table", "none"],
+            default=PRINTOUT,
+            help=f"the print mode for local tests (default '{PRINTOUT}')")
         parser.add_argument("-l",
                             "--loglevel",
                             metavar="level",
                             choices=loglevels.keys(),
                             default="warning",
                             help="the log level (default 'warning')")
+        parser.add_argument("-f",
+                            "--filename",
+                            metavar="filename",
+                            default="",
+                            help="relative path to file, from which to read data (default is empty)")
 
         main(party=parser.parse_args().party, circuit_path=parser.parse_args().circuit,
              oblivious_transfer=not parser.parse_args().no_oblivious_transfer, print_mode=parser.parse_args().m,
-             loglevel=loglevels[parser.parse_args().loglevel])
+             loglevel=loglevels[parser.parse_args().loglevel], filename=parser.parse_args().filename)
 
 
     init()
