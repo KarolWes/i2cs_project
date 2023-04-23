@@ -25,9 +25,12 @@ class Alice(garbler.YaoGarbler):
 
     def __init__(self, circuits, oblivious_transfer=True):
         super().__init__(circuits)
-        self.private_value = utli_karol.private_func("Alice")
         self.socket = util.GarblerSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
+        # Two more fields: general_max stores the value obtained from the OT to further use
+        # private_value is equal to max of input, obtained through private_func
+        self.general_max = -1
+        self.private_value = utli_karol.private_func("Alice")
 
     def start(self):
         """Start Yao protocol."""
@@ -40,10 +43,11 @@ class Alice(garbler.YaoGarbler):
             }
             logging.debug(f"Sending {circuit['circuit']['id']}")
             self.socket.send_wait(to_send)
-            self.print(circuit)
+            # self.print(circuit)
 
             print("-------------")
             self.calculate_response(circuit)
+            self.verify()
 
     def print(self, entry):
         """Print circuit evaluation for all Bob and Alice inputs.
@@ -118,10 +122,25 @@ class Alice(garbler.YaoGarbler):
         # Send Alice's encrypted inputs and keys to Bob
         result = self.ot.get_result(a_inputs, b_keys)
 
-        # Format output and print
+        # Format output, save for further use, and print
         int_result = utli_karol.circuit_output_to_int(result)
+        self.general_max = int_result
         print(f"Output: {int_result}")
 
 
     def _get_encr_bits(self, pbit, key0, key1):
         return ((key0, 0 ^ pbit), (key1, 1 ^ pbit))
+
+    def verify(self):
+        """
+        prepares data for verification and sends them to Bob
+        Should print a verification result (TODO)
+
+        """
+        to_send = {
+            "alice_max": int(self.private_value,2),
+            "general_max": self.general_max
+        }
+        logging.debug(f"Sending data for verification")
+        self.socket.send_wait(to_send)
+    # How to get the message back?

@@ -30,8 +30,11 @@ class Bob:
                 if len(entry) == 3:
                     self.send_evaluation(entry)
                     self.send_response(entry)
-                else:
+                elif len(entry) == 2:
                     self.verify(entry)
+                else:
+                    logging.info("Stop listening")
+                    exit(1)
         except KeyboardInterrupt:
             logging.info("Stop listening")
 
@@ -97,9 +100,26 @@ class Bob:
         print(f"Result of function is {int_result}")
 
     def verify(self, entry):
-        # TODO check how to install this into code
+        """
+        Function verifies if the yao works correctly.
+        This also compromises the secrecy of data between parties
+        Since to obtain verification we send the plaintext values and check if the circuit worked
+        The result is printed in readable form and should be transferred back to Alice (TODO)
+
+        Args:
+            entry: dictionary received from Alice containing two values:
+                    alice_max and general_max (names self-explanatory)
+
+        """
+        # TODO send back the verification data
         logging.info("Verifying")
-        alice_max = entry["private_max"]
-        general_max = entry["obtained_max"]
-        res = max(alice_max, int(self.private_value, 2)) == general_max
-        self.socket.send(res)
+        alice_max = entry["alice_max"]
+        general_max = entry["general_max"]
+        verification_max = max(alice_max, int(self.private_value, 2))
+        res = verification_max == general_max
+        if res:
+            print("Verified correctly")
+        else:
+            print(f"Error! Through transfer obtained: {general_max}, correct value: {verification_max}")
+        print(res)
+        # self.socket.send(res)
