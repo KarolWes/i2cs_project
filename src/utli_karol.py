@@ -28,7 +28,7 @@ def private_func(name: str, bit_size: int = 4, file_read: bool = False, filename
 
     Returns:
         local_max: maximum value of the input in cleaned binary form
-                (e.i. without '0b' and filled with proceeding zeros).
+                (i.e. without '0b' and filled with proceeding zeros).
 
     """
     if not file_read:  # console

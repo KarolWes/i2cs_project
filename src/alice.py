@@ -1,5 +1,4 @@
 import logging
-
 import garbler
 import ot
 import util
@@ -21,6 +20,7 @@ class Alice(garbler.YaoGarbler):
         circuits: the JSON file containing circuits
         oblivious_transfer: Optional; enable the Oblivious Transfer protocol
             (True by default)
+        print_mode: Optional; if set to anything but "none", would result in evaluation and printing out the circuit table
         filename: Optional; path to the file, from which to read data.
             Default is empty string, and data is read from console
     """
@@ -29,7 +29,9 @@ class Alice(garbler.YaoGarbler):
         super().__init__(circuits)
         self.socket = util.GarblerSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
-        # Two more fields: general_max stores the value obtained from the OT to further use
+        # Three more fields:
+        # pm defines, if the printing of the garbled tables (and their evaluation) should be performed
+        # general_max stores the value obtained from the OT to further use
         # private_value is equal to max of input, obtained through private_func
         # (either from console or from file)
         self.pm = print_mode
@@ -50,9 +52,11 @@ class Alice(garbler.YaoGarbler):
             }
             logging.debug(f"Sending {circuit['circuit']['id']}")
             self.socket.send_wait(to_send)
+            # evaluation
             if self.pm != "none":
                 self.print(circuit)
 
+            # main part of communication
             print("-------------")
             self.calculate_response(circuit)
             self.verify()
@@ -149,6 +153,7 @@ class Alice(garbler.YaoGarbler):
         }
         logging.debug(f"Sending data for verification")
         self.socket.send_wait(to_send)
+        # this line is needed to properly establish communication between parties
         self.socket.send("connection established")
         result = self.socket.receive()
         print(f"Result of verification: {result}")
