@@ -113,15 +113,15 @@ class Bob:
         Function verifies if the yao works correctly.
         This also compromises the secrecy of data between parties
         Since to obtain verification we send the plaintext values and check if the circuit worked
-        The result is printed in readable form and should be transferred back to Alice (TODO)
+        The result is printed in readable form and is transferred back to Alice
 
         Args:
             entry: dictionary received from Alice containing two values:
                     alice_max and general_max (names self-explanatory)
 
         """
-        # TODO send back the verification data
         logging.info("Verifying")
+        self.socket.receive()  # for establishing communication between parties
         alice_max = entry["alice_max"]
         general_max = entry["general_max"]
         verification_max = max(alice_max, int(self.private_value, 2))

@@ -135,20 +135,20 @@ class Alice(garbler.YaoGarbler):
         self.general_max = int_result
         print(f"Output: {int_result}")
 
-
     def _get_encr_bits(self, pbit, key0, key1):
         return ((key0, 0 ^ pbit), (key1, 1 ^ pbit))
 
     def verify(self):
         """
         prepares data for verification and sends them to Bob
-        Should print a verification result (TODO)
-
+        Prints a verification result
         """
         to_send = {
-            "alice_max": int(self.private_value,2),
+            "alice_max": int(self.private_value, 2),
             "general_max": self.general_max
         }
         logging.debug(f"Sending data for verification")
         self.socket.send_wait(to_send)
-    # How to get the message back?
+        self.socket.send("connection established")
+        result = self.socket.receive()
+        print(f"Result of verification: {result}")
