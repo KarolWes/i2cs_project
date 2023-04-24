@@ -14,22 +14,22 @@ class Bob:
     Args:
         oblivious_transfer: Optional; enable the Oblivious Transfer protocol
             (True by default).
-        print_mode: Optional; if set to anything but "none", would result in evaluation and printing out the circuit table
         filename: Optional; path to the file, from which to read data.
-            Default is empty string, and data is read from console
+            Default is empty string, and data is read from console.
     """
 
-    def __init__(self, oblivious_transfer=True, print_mode="none", filename=""):
+    def __init__(self, oblivious_transfer=True, filename=""):
+
         self.socket = util.EvaluatorSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
-        # print_mode defines, if the printing of the garbled tables (and their evaluation) should be performed
-        self.pm = print_mode
-        # private_value is equal to max of input, obtained through private_func
+        # data is equal to list of inputs, obtained through private_func
         # (either from console or from file)
+        # private value will be max of input, when data will be cleaned up during communication
+        self.private_value = "0"
         if filename == "":
-            self.private_value = utli_karol.private_func("Bob")
+            self.data, _ = utli_karol.private_func("Bob")
         else:
-            self.private_value = utli_karol.private_func("Bob", file_read=True, filename=filename)
+            self.data, _ = utli_karol.private_func("Bob", file_read=True, filename=filename)
 
 
 
@@ -40,10 +40,12 @@ class Bob:
             for entry in self.socket.poll_socket():
                 self.socket.send(True)
                 # this part was adjusted to the requirements of task: verification
-                # length of the entry dict is 3 for calculation and 2 for verification
+                # length of the entry dict is 5 for calculation and 2 for verification
                 # "else" is a safeguard, should never occur.
-                if len(entry) == 3:
-                    if self.pm != "none":
+                if len(entry) == 5:
+                    # calculate private value (local max) based on saved data and max len obtained through communication
+                    _, self.private_value = utli_karol.private_func(data=self.data, bit_size=entry["bitlength"])
+                    if entry["printout"] != "none":
                         self.send_evaluation(entry)
                     self.send_response(entry)
                 elif len(entry) == 2:

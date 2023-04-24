@@ -20,26 +20,33 @@ class Alice(garbler.YaoGarbler):
         circuits: the JSON file containing circuits
         oblivious_transfer: Optional; enable the Oblivious Transfer protocol
             (True by default)
-        print_mode: Optional; if set to anything but "none", would result in evaluation and printing out the circuit table
-        filename: Optional; path to the file, from which to read data.
-            Default is empty string, and data is read from console
+        print_mode: Optional; if set to anything but "none", would result in evaluation and printing out the circuit table;
+            Note that print_mode has to be set to the same value on both parts.
+        filename: Optional; path to the file, from which to read data;
+            Default is empty string, and data is read from console.
+        bit_size: Optional; size of input numbers in bits (i.e. the max of the number is 2^bit_size-1);
+            Default is 4, max is 15;
+            Note that the size has to correspond with circuit used.
     """
 
-    def __init__(self, circuits, oblivious_transfer=True, print_mode="none", filename=""):
+    def __init__(self, circuits, oblivious_transfer=True, print_mode="none", filename="", bit_size=4):
         super().__init__(circuits)
         self.socket = util.GarblerSocket()
         self.ot = ot.ObliviousTransfer(self.socket, enabled=oblivious_transfer)
-        # Three more fields:
+        # Couple more fields:
         # pm defines, if the printing of the garbled tables (and their evaluation) should be performed
         # general_max stores the value obtained from the OT to further use
         # private_value is equal to max of input, obtained through private_func
         # (either from console or from file)
+        # bitlen is length of numbers from input, saved for later use
         self.pm = print_mode
         self.general_max = -1
+        self.bitlen = bit_size
         if filename == "":
-            self.private_value = utli_karol.private_func("Alice")
+            _, self.private_value = utli_karol.private_func("Alice", bit_size=bit_size)
         else:
-            self.private_value = utli_karol.private_func("Alice", file_read=True, filename=filename)
+            _, self.private_value = utli_karol.private_func("Alice", bit_size=bit_size, file_read=True,
+                                                            filename=filename)
 
     def start(self):
         """Start Yao protocol."""
@@ -49,6 +56,8 @@ class Alice(garbler.YaoGarbler):
                 "circuit": circuit["circuit"],
                 "garbled_tables": circuit["garbled_tables"],
                 "pbits_out": circuit["pbits_out"],
+                "printout": self.pm,
+                "bitlength": self.bitlen,
             }
             logging.debug(f"Sending {circuit['circuit']['id']}")
             self.socket.send_wait(to_send)
@@ -137,7 +146,7 @@ class Alice(garbler.YaoGarbler):
         # Format output, save for further use, and print
         int_result = utli_karol.circuit_output_to_int(result)
         self.general_max = int_result
-        print(f"Output: {int_result}")
+        print(f"Result of function is {int_result}")
 
     def _get_encr_bits(self, pbit, key0, key1):
         return ((key0, 0 ^ pbit), (key1, 1 ^ pbit))

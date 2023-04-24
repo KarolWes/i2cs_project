@@ -10,23 +10,27 @@ from bob import Bob
 
 logging.basicConfig(format="[%(levelname)s] %(message)s",
                     level=logging.WARNING)
-PRINTOUT = "none"
+PRINTOUT = "circuit"
 
 def main(
         party,
         circuit_path="circuits/default.json",
         oblivious_transfer=True,
         print_mode=PRINTOUT,
-        loglevel=logging.DEBUG,
-        filename=""
+        loglevel=logging.WARNING,
+        filename="",
+        bitsize=4
 ):
     logging.getLogger().setLevel(loglevel)
 
     if party == "alice":
-        alice = Alice(circuit_path, oblivious_transfer=oblivious_transfer, print_mode=print_mode, filename=filename)
+        alice = Alice(circuit_path, oblivious_transfer=oblivious_transfer,
+                      print_mode=print_mode, filename=filename,
+                      bit_size=int(bitsize))
         alice.start()
     elif party == "bob":
-        bob = Bob(oblivious_transfer=oblivious_transfer, print_mode=print_mode, filename=filename)
+        bob = Bob(oblivious_transfer=oblivious_transfer,
+                  filename=filename)
         bob.listen()
     elif party == "local":
         local = LocalTest(circuit_path, print_mode=print_mode)
@@ -56,7 +60,7 @@ if __name__ == '__main__':
             "-c",
             "--circuit",
             metavar="circuit.json",
-            default="circuits/default.json",
+            default="src/circuits/4bit_max.json",
             help=("the JSON circuit file for alice and local tests"),
         )
         parser.add_argument("--no-oblivious-transfer",
@@ -76,13 +80,18 @@ if __name__ == '__main__':
                             help="the log level (default 'warning')")
         parser.add_argument("-f",
                             "--filename",
-                            metavar="filename",
+                            metavar="path",
                             default="",
                             help="relative path to file, from which to read data (default is empty)")
+        parser.add_argument("-b",
+                            "--bitsize",
+                            default=4,
+                            help="size of input numbers in bits (default is 4)")
 
         main(party=parser.parse_args().party, circuit_path=parser.parse_args().circuit,
              oblivious_transfer=not parser.parse_args().no_oblivious_transfer, print_mode=parser.parse_args().m,
-             loglevel=loglevels[parser.parse_args().loglevel], filename=parser.parse_args().filename)
+             loglevel=loglevels[parser.parse_args().loglevel], filename=parser.parse_args().filename,
+             bitsize=parser.parse_args().bitsize)
 
 
     init()
