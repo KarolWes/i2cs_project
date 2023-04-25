@@ -2,6 +2,13 @@
 
 ### 1.1. Content
 
+1. [Introduction](#12-Introduction)
+2. [Instalation and requirements](#13-Installation-and-requirements)
+3. [Execution](#14-execution)
+4. [Theory](#15-theory)
+5. [Implementation](#16-implementation)
+6. [Final remarks](#17-final-remarks)
+
 ### 1.2. Introduction
 
 This project implements a computation of maximal value of two set of numbers, alongside the verification, if the computation was done correctly. It is prepared for Introduction to Cybersecurity course on University of Klagenfurt, Austria.
@@ -23,7 +30,7 @@ My implementation uses the same format of command as original implemetation. To 
 python src/main.py <party>
 ```
 
-where party is equal to "bob" or "alice". The command is formatted in such a way, that executing the task does not require and additional arguments.Nevertheless, the list of arguments is as follows:
+where party is equal to "bob" or "alice". The command is formatted in such a way, that executing the task does not require any additional arguments. Nevertheless, the list of arguments is as follows:
 
 * -c: path to circuit file saved in json format, by default 4bit_max (default path is from root folder, not from src).
 * -m: printout mode. Possible values are "circuit" (default), "table", and "none". In the case of running Alice or Bob, there is no difference between "circuit" and "table". "none" will result in skipping the evaluation process, and limit the execution only to necessary information exchange.
@@ -47,9 +54,11 @@ python src/main.py -h
 ```
 
 While using bash based console, type ``./src/main.py`` instead of ``python src/main.py``. Each party needs to be executed from different console instance (works also between different shells).
+
 #### 1.4.1. Output
-Both sides will start by printing the prompt for input or confirmation of reading from file. When the communication starts, Bob will confirm receiving the circuit ("Received ``name``"). If the evaluation is requested, it will be printed next on Alice side (consult the documentation of original implementation for further information).  
-After the communication finishes, both sides will print message "Result of function is ``n``".  
+
+Both sides will start by printing the prompt for input or confirmation of reading from file. When the communication starts, Bob will confirm receiving the circuit ("Received ``name``"). If the evaluation is requested, it will be printed next on Alice side (consult the documentation of original implementation for further information).
+After the communication finishes, both sides will print message "Result of function is ``n``".
 Alice will print out the result of verification in form of "Result of verification: True/False", while Bob will give the proper explanation: If everything is correct, he will print "Verified correctly", otherwise, "Error! Through transfer obtained: ``a``, correct value: ``b``".
 
 ### 1.5. Theory
@@ -133,94 +142,131 @@ Which makes $ 8n-2 $ gates in total. The main advantage of this circuit is its e
 9. Return to step 2.
 
 ## 1.6. Implementation
-Most parts of the code is kept from original. The code has been refactored, with separate classes moved to respective files. 
+
+Most parts of the code is kept from original. The code has been refactored, with separate classes moved to respective files.
+
 ### 1.6.1. garbler.py
+
 This file contain the YaoGarbler and LocalTest classes. The only change applied to this file is the addition of one more possible value to -m flag ("none"), which in the case of LocalTest will produce the same output as "circuit".
+
 ### 1.6.2. util.py
+
 No changes here, only the original code.
 
 ### 1.6.3. ot.py
+
 Contain the definition of oblivious transfer. Only difference is, that function ``send_result`` returns the obtained value. Rest of the code form original implementation.
 
 ### 1.6.4. util_karol.py
+
 This file contain some utility functions required in my implementation.
+
 #### 1.6.4.1. cleanup
+
 Takes list of integers ``line`` and integer describing the upper bound ``lim`` as input and returns the list with omitted values negative and bigger than (or equal to) the upper bound.
+
 #### 1.6.4.2. circuit_output_to_int
+
 Takes as an input dictionary ``d`` formated as the output of the circuit ``{no_of_wire: bit}``and converts it into single number (combines the bits into bigger binary number and changes the base).
 
 #### 1.6.4.3. private_func
+
 Inputs:
-* ``name``: type: string; default: ""; name of the party, used for convenience in the prompts. 
+
+* ``name``: type: string; default: ""; name of the party, used for convenience in the prompts.
 * ``bit_size``: type: int; default: 16; length of the numbers (in bits) allowed on input
 * ``file_read``: type: bool; default: False; if input is obtained from file or from console
 * ``filename``: type: string; default: ""; path to the file with input data. It is analyzed only if ``file_read`` is set to true.
 * ``data``: type: list; default: []; list of inputs. If this is set, it replaces other input methods.
 
 Outupt:
+
 1. ``line``: type: list; list of integers obtained from any output methods.
 2. ``local_max``: type: string; maximum value of the inputs, in binary form.
 
-Execution will start with prompts about input or confirmation of reading from file. If file is not found, it will output an error. Data is then cleaned (see: section cleanup) and max is calculated using build-in function. The result is transformed to binary and filled with leading zeros. 
+Execution will start with prompts about input or confirmation of reading from file. If file is not found, it will output an error. Data is then cleaned (see: [section cleanup](#1641-cleanup)) and max is calculated using build-in function. The result is transformed to binary and filled with leading zeros.
 
 ### 1.6.5. alice.py
+
 #### 1.6.5.1. _ _ init _ _
+
 Takes three new inputs:
+
 * ``print_mode``: defines, if the evaluation of the circuit should be performed (if "circuit") or not ("none").
 * ``filename``: path to the file, from which to read the data
 * ``bit_size``: length (in bits) of integers allowed in the input
 
 All of those variables are provided from execution command.
-Function executes parental init function and then saves all the parameters as attributes. Calculates the max of the input (see: section private_func).
+Function executes parental init function and then saves all the parameters as attributes. Calculates the max of the input (see: [section private_func](#1643-privatefunc)).
+
 #### 1.6.5.2. start
-No input.  
-This function serves as a spine for the execution.  
-Creates the dictionary to be sent to the other party (see section Theory/Alice for further information). If necessary, does evaluation of the circuit (function print from original implementation). Calculates the response (see: section calculate_response) and verifies protocol (see: section alice.py/verify).
+
+No input.
+
+This function serves as a spine for the execution.
+Creates the dictionary to be sent to the other party (see [section Theory/Alice](#152-alice) for further information). If necessary, does evaluation of the circuit (function print from original implementation). Calculates the response (see: [section calculate_response](#1653-calculateresponse)) and verifies protocol (see: [section alice.py/verify](#1654-verify)).
 
 #### 1.6.5.3. calculate_response
-This function is heavily based on the original implementation, with solutions inspired by AJ Wisniewski ([github](https://github.com/awisniewski21/garbled-circuit))  
-Input: ``entry``: type: dictionary; created using original implementation. 
+
+This function is heavily based on the original implementation, with solutions inspired by AJ Wisniewski ([github](https://github.com/awisniewski21/garbled-circuit))
+
+Input: ``entry``: type: dictionary; created using original implementation.
 
 Instead of passing through all possible inputs, it maps the private max value to the wires and sends this. At the end output (which is originaly in the form of dictionary {no_of_wire:bit}) is converted to integer and saved as an attribute for further use. Prints out the output.
 
 #### 1.6.5.4. verify
-No input.  
+
+No input.
+
 Creates a dictionary with two values: max of Alice inputs and value obtained through the execution of protocol. Sends this data to other party. After receiving confirmation answers with another message ("connection established", but that value is never used, so it is only for convenience). This allows the function to establish temporary communication channel between parties. After receiving the result of verification, prints it.
 
-
 Other Functions left without changes.
+
 ### 1.6.6. bob.py
+
 #### 1.6.6.1. _ _ init _ _
-Takes one additional input: ``filename``, the path to the file from which to read the data.  
-Proceeds with creating all the necessary attributes (from original implementation). Attributes data contains the saved list of inputs (by default limited to 16 bits of length). 
+
+Takes one additional input: ``filename``, the path to the file from which to read the data.
+
+Proceeds with creating all the necessary attributes (from original implementation). Attributes data contains the saved list of inputs (by default limited to 16 bits of length).
 
 #### 1.6.6.2. listen
-No input.  
-This function serves as a spine for the execution.  
-After receiving each message, function confirms it by sending True. Then based on the length of the received dictionary, cleans up the input (see section util_karol.py/cleanup) it provides evaluation (if needed, original function send_evaluation) and calculates response (see: section send_response), or verifies the protocol (see: section bob.py/verify), or prints out error message and stops execution. The execution will run, as long as no error occurs, or it is stopped by Keyboard Interrupt.
+
+No input.
+
+This function serves as a spine for the execution.
+After receiving each message, function confirms it by sending True. Then based on the length of the received dictionary, cleans up the input (see [section util_karol.py/cleanup](#1641-cleanup)) it provides evaluation (if needed, original function send_evaluation) and calculates response (see: [section send_response](#1663-sendresponse)), or verifies the protocol (see: [section bob.py/verify](#1664-verify)), or prints out error message and stops execution. The execution will run, as long as no error occurs, or it is stopped by Keyboard Interrupt.
 
 #### 1.6.6.3. send_response
-This function is heavily based on the original implementation, with solutions inspired by AJ Wisniewski ([github](https://github.com/awisniewski21/garbled-circuit))  
-Input: ``entry``: type: dictionary; created using original implementation.   
+
+This function is heavily based on the original implementation, with solutions inspired by AJ Wisniewski ([github](https://github.com/awisniewski21/garbled-circuit))
+
+Input: ``entry``: type: dictionary; created using original implementation.
+
 Maps Bob's input to wires and proceeds with the OT execution. Result of the transfer is printed in the form of single integer.
 
 #### 1.6.6.4. verify
-Input: ``entry``: dictionary containing two values: Max of other party's inputs and the value obtained from protocol. 
+
+Input: ``entry``: dictionary containing two values: Max of other party's inputs and the value obtained from protocol.
+
 After establishing communication, calculates max of private value and the value from dictionary (other party's max) and compares it with the value obtained from protocol. The result of comparison is printed alongside the proper message and is transmitted back to other party.
 
 ### 1.6.7. main.py
-This file is responsible for the execution of the program. It contains the argument parser (from original implementation, but extend to new, necessary values). 
+
+This file is responsible for the execution of the program. It contains the argument parser (from original implementation, but extend to new, necessary values).
 The constant value ``PRINTOUT`` is responsible for the default value of the print mode, currently set to "circuit".
 
 For more information check the files for comments and docstrings.
 
 ## 1.7 Final remarks
-Coded by Karol Wesołowski (University Klagenfurt/Poznan University of Technology) as a final project for the Introduction to Cybersecurity course on University Klagenfurt, Austria.  
-Coded using jetbrains Pycharm.  
+
+Coded by Karol Wesołowski (University Klagenfurt/Poznan University of Technology) as a final project for the Introduction to Cybersecurity course on University Klagenfurt, Austria.
+Coded using jetbrains Pycharm.
 Circuits graphics generated using Visual Paradigm.
-Tested under Windows 10 Home.  
+Tested under Windows 10 Home.
 Documentation prepared in Markdown.
-Version control using git, repository shared on github: https://github.com/KarolWes/i2cs_project  
-Based on code by Oliver Roques, Imperial College London: https://github.com/ojroques/garbled-circuit  
-Communication between parties inspired by solution by Austin J. Wisniewski, The University of Illinois Urbana-Champaign: https://github.com/awisniewski21/garbled-circuit  
+Version control using git, repository shared on github: https://github.com/KarolWes/i2cs_project
+Based on code by Oliver Roques, Imperial College London: https://github.com/ojroques/garbled-circuit
+Communication between parties inspired by solution by Austin J. Wisniewski, The University of Illinois Urbana-Champaign: https://github.com/awisniewski21/garbled-circuit
 April 2023, Klagenfurt, Austria
+
