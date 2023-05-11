@@ -1,3 +1,3 @@
-While using files presented here, don't forget to give proper path (../data/name.in)
+While using files presented here, don't forget to give proper path (src/data/<name>.in)
 Correct answer is 14 (from bob's file)
 Both files contains common errors (number to big or negative) to check execution
